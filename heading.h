@@ -48,7 +48,7 @@ struct Terminal{
    int length;
    string *index;
    vector<string> *ids;
-   vector<Var> *variables; 
+   vector<Variable> *variables; 
 };
 
 #endif
