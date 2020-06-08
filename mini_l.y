@@ -6,9 +6,9 @@ extern int currPos;
 int yylex(void);
 stringstream *all_code;
 FILE * intfile;
-string gen_code(string *res, string op, string *value_1, string *value_2);
-string to_string(char* s);
-string to_string(int s);
+string code_gen(string *res, string op, string *value_1, string *value_2);
+string toString(char* s);
+string toString(int s);
 string go_to(string *s);
 void expression_code( Terminal &D1,  Terminal D2, Terminal D3, string op);
 bool success = true;
@@ -51,9 +51,8 @@ int temp_l = 0;
 %right NOT
 %left AND OR
 %right ASSIGN
-
 %type <NonTerminal> program
-%type <Terminal> decl_loop stmt_loop function function_2 declaration declaration_2 declaration_3 statement  statement_1 statement_2   statement_21 statement_3   statement_4   statement_5   statement_51  statement_6   statement_61  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_31       term_32       var           var_2         b_loop b_func
+%type <Terminal> decl_loop stmt_loop function function_2 declaration declaration_2 declaration_3 statement  statement_1 statement_2   statement_2_2 statement_3   statement_4   statement_5   statement_5_2  statement_6   statement_6_2  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_3_2       term_3_3       var           var_2         b_loop b_func
 
 
 %%
@@ -61,7 +60,7 @@ int temp_l = 0;
 program:    function program {
                 $$.code = $1.code;
                 *($$.code) << $2.code->str();
-                if(!no_main_function){
+                if(!no_main_function) {
                     yyerror("ERROR: main function not defined.");
                 }
 
@@ -75,16 +74,16 @@ program:    function program {
 function:   FUNCTION b_func SEMICOLON BEGINPARAMS decl_loop ENDPARAMS BEGINLOCALS decl_loop ENDLOCALS BEGINBODY statement SEMICOLON function_2 {
                 $$.code = new stringstream(); 
                 string tmp = *$2.place;
-                if( tmp.compare("main") == 0){
+                if( tmp.compare("main") == 0) {
                     no_main_function = true;
                 }
                 *($$.code)  << "func " << tmp << "\n" << $5.code->str() << $8.code->str();
-                for(int i = 0; i < $5.variables->size(); ++i){
-                    if((*$5.variables)[i].type == INT_ARR){
+                for(int i = 0; i < $5.variables->size(); ++i) {
+                    if((*$5.variables)[i].type == INT_ARR) {
                         yyerror("Error: cannot pass arrays to function.");
                     }
-                    else if((*$5.variables)[i].type == INT){
-                        *($$.code) << "= " << *((*$5.variables)[i].place) << ", " << "$"<< to_string(i) << "\n";
+                    else if((*$5.variables)[i].type == INT) {
+                        *($$.code) << "= " << *((*$5.variables)[i].place) << ", " << "$"<< toString(i) << "\n";
                     }else{
                         yyerror("Error: invalid type");
                     }
@@ -96,7 +95,7 @@ b_func: IDENT {
             string tmp = $1;
             Variable myf = Variable();
             myf.type = FUNC;
-            if(!map_check(tmp)){
+            if(!map_check(tmp)) {
                 push_map(tmp,myf); 
             }
             $$.place = new string();
@@ -116,7 +115,7 @@ function_2: statement SEMICOLON function_2 {
 decl_loop:  declaration SEMICOLON decl_loop {
                 $$.code = $1.code;
                 $$.variables = $1.variables;
-                for( int i = 0; i < $3.variables->size(); ++i){
+                for( int i = 0; i < $3.variables->size(); ++i) {
                     $$.variables->push_back((*$3.variables)[i]);
                 }
                 *($$.code) << $3.code->str();
@@ -148,13 +147,13 @@ declaration:    IDENT declaration_2 {
                     vari.place = new string();
                     *vari.place = $1;
                     $$.variables->push_back(vari);
-                    if($2.type == INT_ARR){
-                        if($2.length <= 0){
+                    if($2.type == INT_ARR) {
+                        if($2.length <= 0) {
                             yyerror("ERROR: invalid array size <= 0");
                         }
                         *($$.code) << ".[] " << $1 << ", " << $2.length << "\n";
                         string s = $1;
-                        if(!map_check(s)){
+                        if(!map_check(s)) {
                             push_map(s,vari);
                         }
                         else{
@@ -163,10 +162,10 @@ declaration:    IDENT declaration_2 {
                         }
                     }
 
-                    else if($2.type == INT){
+                    else if($2.type == INT) {
                         *($$.code) << ". " << $1 << "\n";
                         string s = $1;
-                        if(!map_check(s)){
+                        if(!map_check(s)) {
                             push_map(s,vari);
                         }
                         else{
@@ -190,10 +189,10 @@ declaration_2:  COMMA IDENT declaration_2 {
                     vari.place = new string();
                     *vari.place = $2;
                     $$.variables->push_back(vari);
-                    if($3.type == INT_ARR){
+                    if($3.type == INT_ARR) {
                         *($$.code) << ".[] " << $2 << ", " << $3.length << "\n";
                         string s = $2;
-                        if(!map_check(s)){
+                        if(!map_check(s)) {
                             push_map(s,vari);
                         }
                         else{
@@ -201,10 +200,10 @@ declaration_2:  COMMA IDENT declaration_2 {
                             yyerror(tmp.c_str());
                         }
                     }
-                    else if($3.type == INT){
+                    else if($3.type == INT) {
                         *($$.code) << ". " << $2 << "\n";
                         string s = $2;
-                        if(!map_check(s)){
+                        if(!map_check(s)) {
                             push_map(s,vari);
                         }
                         else{
@@ -256,7 +255,7 @@ statement:      statement_1 {
                 }
                 | CONTINUE{
                     $$.code = new stringstream();
-                    if(loop_stack.size() <= 0){
+                    if(loop_stack.size() <= 0) {
                         yyerror("ERROR: continue statement not within a loop");
                     }
                     else{
@@ -273,48 +272,48 @@ statement:      statement_1 {
 statement_1:    var ASSIGN expression{
                     $$.code = $1.code;
                     *($$.code) << $3.code->str();
-                    if($1.type == INT && $3.type == INT){
+                    if($1.type == INT && $3.type == INT) {
                        *($$.code) << "= " << *$1.place << ", " << *$3.place << "\n";
                     }
-                    else if($1.type == INT && $3.type == INT_ARR){
-                        *($$.code) << gen_code($1.place, "=[]", $3.place, $3.index);
+                    else if($1.type == INT && $3.type == INT_ARR) {
+                        *($$.code) << code_gen($1.place, "=[]", $3.place, $3.index);
                     }
-                    else if($1.type == INT_ARR && $3.type == INT && $1.value != NULL){
-                        *($$.code) << gen_code($1.value, "[]=", $1.index, $3.place);
+                    else if($1.type == INT_ARR && $3.type == INT && $1.value != NULL) {
+                        *($$.code) << code_gen($1.value, "[]=", $1.index, $3.place);
                     }
-                    else if($1.type == INT_ARR && $3.type == INT_ARR){
+                    else if($1.type == INT_ARR && $3.type == INT_ARR) {
                         string *tmp = newTemp();
-                        *($$.code) << temp_declaration(tmp) << gen_code(tmp, "=[]", $3.place, $3.index);
-                        *($$.code) << gen_code($1.value, "[]=", $1.index, tmp);
+                        *($$.code) << temp_declaration(tmp) << code_gen(tmp, "=[]", $3.place, $3.index);
+                        *($$.code) << code_gen($1.value, "[]=", $1.index, tmp);
                     }
-                    else{
+                    else {
                         yyerror("Error: expression is null.");
                     }
                 }
                 ;
 
-statement_2:    IF bool_exp THEN stmt_loop statement_21 ENDIF{
+statement_2:    IF bool_exp THEN stmt_loop statement_2_2 ENDIF {
                     $$.code = new stringstream();
                     $$.begin = newLabel();
                     $$.end = newLabel();
                     *($$.code) << $2.code->str() << "?:= " << *$$.begin << ", " <<  *$2.place << "\n";
-                    if($5.begin != NULL){                       
+                    if($5.begin != NULL) {                       
                         *($$.code) << go_to($5.begin); 
                         *($$.code) << label_declaration($$.begin)  << $4.code->str() << go_to($$.end);
                         *($$.code) << label_declaration($5.begin) << $5.code->str();
                     }
-                    else{
+                    else {
                         *($$.code) << go_to($$.end)<< label_declaration($$.begin)  << $4.code->str();
                     }
                     *($$.code) << label_declaration($$.end);
                 }
                 ;
 
-statement_21:   {
+statement_2_2:   {
                     $$.code = new stringstream();
                     $$.begin = NULL;
                 }
-                | ELSE stmt_loop{
+                | ELSE stmt_loop {
                     $$.code = $2.code;
                     $$.begin = newLabel();
                 }
@@ -354,9 +353,9 @@ statement_4:    DO b_loop BEGINLOOP stmt_loop ENDLOOP WHILE bool_exp{
                 }
                 ;
 
-statement_5:    READ var statement_51{
+statement_5:    READ var statement_5_2{
                     $$.code = $2.code;
-                    if($2.type == INT){
+                    if($2.type == INT) {
                        *($$.code) << ".< " << *$2.place << "\n"; 
                     }
                     else{
@@ -366,9 +365,9 @@ statement_5:    READ var statement_51{
                 }
                 ;
 
-statement_51:   COMMA var statement_51 {
+statement_5_2:   COMMA var statement_5_2 {
                     $$.code = $2.code;
-                    if($2.type == INT){
+                    if($2.type == INT) {
                        *($$.code) << ".< " << *$2.place << "\n"; 
                     }
                     else{
@@ -381,9 +380,9 @@ statement_51:   COMMA var statement_51 {
                   }
                 ;
 
-statement_6:    WRITE var statement_61{
+statement_6:    WRITE var statement_6_2{
                     $$.code = $2.code;
-                    if($2.type == INT){
+                    if($2.type == INT) {
                        *($$.code) << ".> " << *$2.place << "\n"; 
                     }
                     else{
@@ -393,9 +392,9 @@ statement_6:    WRITE var statement_61{
                   }
                 ;
 
-statement_61:   COMMA var statement_61{
+statement_6_2:   COMMA var statement_6_2{
                     $$.code = $2.code;
-                    if($2.type == INT){
+                    if($2.type == INT) {
                        *($$.code) << ".> " << *$2.place << "\n"; 
                     }
                     else{
@@ -414,7 +413,7 @@ bool_exp:       relation_and_exp bool_exp2{
                     if($2.op != NULL && $2.place != NULL)
                     {                        
                         $$.place = newTemp();
-                       *($$.code) << temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
+                       *($$.code) << temp_declaration($$.place) << code_gen($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -440,7 +439,7 @@ relation_and_exp:    relation_exp relation_and_exp2{
                     if($2.op != NULL && $2.place != NULL)
                     {                        
                         $$.place = newTemp();
-                       *($$.code) << temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
+                       *($$.code) << temp_declaration($$.place) << code_gen($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -466,7 +465,7 @@ relation_exp:   relation_exp_s{
                 | NOT relation_exp_s{
                     $$.code = $2.code;
                     $$.place = newTemp();
-                    *($$.code) << temp_declaration($$.place) << gen_code($$.place, "!", $2.place, NULL);
+                    *($$.code) << temp_declaration($$.place) << code_gen($$.place, "!", $2.place, NULL);
                 }
                 ;
 
@@ -476,7 +475,7 @@ relation_exp_s: expression comp expression{
                     *($$.code) << $2.code->str();
                     *($$.code) << $3.code->str();
                     $$.place = newTemp();
-                    *($$.code)<< temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $3.place);
+                    *($$.code)<< temp_declaration($$.place) << code_gen($$.place, *$2.op, $1.place, $3.place);
                 }
                 | TRUE{                    
 
@@ -534,7 +533,7 @@ expression:     mult_expr expression_2{
                     if($2.op != NULL && $2.place != NULL)
                     {                        
                         $$.place = newTemp();
-                       *($$.code)<< temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
+                       *($$.code)<< temp_declaration($$.place) << code_gen($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -563,7 +562,7 @@ mult_expr:      term mult_expr_2{
                     if($2.op != NULL && $2.place != NULL)
                     {                        
                         $$.place = newTemp();
-                       *($$.code)<< temp_declaration($$.place)<< gen_code($$.place, *$2.op, $1.place, $2.place);
+                       *($$.code)<< temp_declaration($$.place)<< code_gen($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -593,7 +592,7 @@ term:           SUB term_2{
                     $$.code = $2.code;
                     $$.place = newTemp();
                     string tmp = "-1";
-                    *($$.code)<< temp_declaration($$.place) << gen_code($$.place, "*",$2.place, &tmp );
+                    *($$.code)<< temp_declaration($$.place) << code_gen($$.place, "*",$2.place, &tmp );
                   }
                 | term_2{
                     $$.code = $1.code;
@@ -613,7 +612,7 @@ term_2:         var{
                 | NUMBER{
                     $$.code = new stringstream();
                     $$.place = new string();
-                    *$$.place = to_string($1);
+                    *$$.place = toString($1);
                   }
                 | LPAREN expression RPAREN{
                     $$.code = $2.code;
@@ -621,7 +620,7 @@ term_2:         var{
                   }
                 ;
 
-term_3:         IDENT LPAREN term_31 RPAREN{
+term_3:         IDENT LPAREN term_3_2 RPAREN{
                     $$.code = $3.code;
                     $$.place = newTemp();
                     *($$.code) << temp_declaration($$.place)<< "call " << $1 << ", " << *$$.place << "\n";
@@ -630,7 +629,7 @@ term_3:         IDENT LPAREN term_31 RPAREN{
                 }
                 ;
 
-term_31:        expression term_32{
+term_3_2:        expression term_3_3{
                     $$.code = $1.code;
                     *($$.code) << $2.code->str();
                     *($$.code) << "param " << *$1.place << "\n";
@@ -639,7 +638,7 @@ term_31:        expression term_32{
                     $$.code = new stringstream(); 
                   }
                 ;
-term_32:        COMMA term_31{
+term_3_3:        COMMA term_3_2{
                     $$.code = $2.code;
                 } 
                 | {
@@ -651,18 +650,18 @@ var:            IDENT var_2{
                     $$.type = $2.type;
                     string tmp = $1;
                     map_check_declaration(tmp);
-                    if(map_check(tmp) && var_map[tmp].type != $2.type){
-                        if($2.type == INT_ARR){
+                    if(map_check(tmp) && var_map[tmp].type != $2.type) {
+                        if($2.type == INT_ARR) {
                             string output ="Error: used variable \"" + tmp + "\" is not an array.";
                             yyerror(output.c_str());
                         }
-                        else if($2.type == INT){
+                        else if($2.type == INT) {
                             string output ="Error: used array variable \"" + tmp + "\" is missing a specified index.";
                             yyerror(output.c_str());
                         }
                     }
 
-                    if($2.index == NULL){
+                    if($2.index == NULL) {
                         $$.place = new string();
                         *$$.place = $1;
                     }
@@ -671,7 +670,7 @@ var:            IDENT var_2{
                         $$.place = newTemp();
                         string* tmp = new string();
                         *tmp = $1;
-                        *($$.code) << temp_declaration($$.place) << gen_code($$.place, "=[]", tmp,$2.index);
+                        *($$.code) << temp_declaration($$.place) << code_gen($$.place, "=[]", tmp,$2.index);
                         $$.value = new string();
                         *$$.value = $1;
                     }
@@ -694,22 +693,13 @@ var_2:          LSQUARE  expression RSQUARE {
             
 %%
 
-string gen_code(string *res, string op, string *value_1, string *value_2) {
-    if(op == "!") {
-        return op + " " + *res + ", " + *value_1 + "\n";
-    }
-    else {
-        return op + " " + *res + ", " + *value_1 + ", "+ *value_2 +"\n";
-    }
-}
-
-string to_string(char* s) {
+string toString(char* s) {
     ostringstream c;
     c << s;
     return c.str();
 }
 
-string to_string(int s) {
+string toString(int s) {
     ostringstream c;
     c << s;
     return c.str();
@@ -717,6 +707,15 @@ string to_string(int s) {
 
 string go_to(string *s) {
     return ":= "+ *s + "\n"; 
+}
+
+string code_gen(string *res, string op, string *value_1, string *value_2) {
+    if(op == "!") {
+        return op + " " + *res + ", " + *value_1 + "\n";
+    }
+    else {
+        return op + " " + *res + ", " + *value_1 + ", "+ *value_2 +"\n";
+    }
 }
  
  void expression_code( Terminal &D1, Terminal D2, Terminal D3, string op) {
@@ -732,10 +731,9 @@ string go_to(string *s) {
         D1.op = new string();
         *D1.op = op;
 
-        *(D1.code) << temp_declaration(D1.place)<< gen_code(D1.place , *D3.op, D2.place, D3.place);
+        *(D1.code) << temp_declaration(D1.place)<< code_gen(D1.place , *D3.op, D2.place, D3.place);
     } 
 }
-
 
 void push_map(string name, Variable vari) {
     if(var_map.find(name) == var_map.end()) {
@@ -748,14 +746,14 @@ void push_map(string name, Variable vari) {
 }
 
 bool map_check(string name) {
-    if(var_map.find(name) == var_map.end()){
+    if(var_map.find(name) == var_map.end()) {
         return false;
     }
     return true;
 }
 
 void map_check_declaration(string name) {
-    if(!map_check(name)){
+    if(!map_check(name)) {
         string tmp = "ERROR: \"" + name + "\" does not exist";
         yyerror(tmp.c_str());
     }
@@ -795,7 +793,7 @@ int yyerror(const char *s) {
 
 int main(int argc, char **argv) {
 
-    if((argc > 1) && (intfile = fopen(argv[1],"r")) == NULL){
+    if((argc > 1) && (intfile = fopen(argv[1],"r")) == NULL) {
         printf("syntax: %s filename\n", argv[0]);
         return 1;
     }
