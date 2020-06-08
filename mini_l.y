@@ -1,8 +1,8 @@
 %{
 #include "heading.h"
 int yyerror(const char* s);
- extern int currLine;
- extern int currPos;
+extern int curr_line;
+extern int curr_pos;
 int yylex(void);
 stringstream *all_code;
 FILE * myin;
@@ -791,7 +791,7 @@ void check_map_dec(string name){
 
 int yyerror(const char *s) {
    success = false;
-   printf("** Line %d, position %d: %s\n", currLine, currPos, s);
+   printf("** Line %d, position %d: %s\n", curr_line, curr_pos, s);
    return -1;
 }
 int main(int argc, char **argv) {
