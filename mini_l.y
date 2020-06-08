@@ -731,16 +731,16 @@ string *newTemp() {
     string *t = new string();
     ostringstream tempostring;
     tempostring << temp;
-    *t = "__temp__"+ tempostream.str();
+    *t = "__temp__"+ tempostring.str();
     temp++;
     return t;
 }
 
 string *newLabel() {
     string *t = new string();
-    ostringstream tempostream;
-    tempostream << temp_l;
-    *t = "__label__"+ tempostream.str();
+    ostringstream tempostring;
+    tempostring << temp_l;
+    *t = "__label__"+ tempostring.str();
     temp_l++;
     return t;
 }
