@@ -729,18 +729,18 @@ string temp_declaration(string *s) {
 
 string *newTemp() {
     string *t = new string();
-    ostringstream conv;
-    conv << temp;
-    *t = "__temp__"+ conv.str();
+    ostringstream tempostring;
+    tempostring << temp;
+    *t = "__temp__"+ tempostream.str();
     temp++;
     return t;
 }
 
-string * newLabel() {
-    string * t = new string();
-    ostringstream conv;
-    conv << temp_l;
-    *t = "__label__"+ conv.str();
+string *newLabel() {
+    string *t = new string();
+    ostringstream tempostream;
+    tempostream << temp_l;
+    *t = "__label__"+ tempostream.str();
     temp_l++;
     return t;
 }
