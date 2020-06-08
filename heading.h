@@ -23,7 +23,6 @@ enum Type {INT,INT_ARR,FUNC};
 struct Variable{ 
     string *place;
     string *value;
-    string *offset;
     Type type;
     int length;
     string *index;
@@ -39,7 +38,6 @@ struct Terminal{
    stringstream *code;
    string *place;
    string *value;
-   string *offset;
    string *op;
    string *begin;
    string *parent;
@@ -47,7 +45,6 @@ struct Terminal{
    Type type;
    int length;
    string *index;
-   vector<string> *ids;
    vector<Variable> *variables; 
 };
 
