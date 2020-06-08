@@ -97,7 +97,7 @@ function:   FUNCTION b_func SEMICOLON BEGINPARAMS decl_loop ENDPARAMS BEGINLOCAL
             ;
 b_func: IDENT {
             string tmp = $1;
-            Variable myf = Varriable();
+            Variable myf = Variable();
             myf.type = FUNC;
             if(!check_map(tmp)){
                 push_map(tmp,myf); 
@@ -120,7 +120,7 @@ decl_loop:  declaration SEMICOLON decl_loop {
                 $$.code = $1.code;
                 $$.variables = $1.variables;
                 for( int i = 0; i < $3.variables->size(); ++i){
-                    $$.variables->push_back((*$3.varieables)[i]);
+                    $$.variables->push_back((*$3.variables)[i]);
                 }
                 *($$.code) << $3.code->str();
                 } 
