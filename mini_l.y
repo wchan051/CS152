@@ -19,7 +19,7 @@ bool success = true;
 bool no_main_function = false;
 void push_map(string name, Variable v);
 bool map_check(string name);
-void map_check_dec(string name);
+void map_check_declaration(string name);
 int temp = 0;
 int temp_l = 0;
 map<string,Variable> var_map;
@@ -626,7 +626,7 @@ term_3:         IDENT LPAREN term_31 RPAREN{
                     $$.place = newTemp();
                     *($$.code) << temp_declaration($$.place)<< "call " << $1 << ", " << *$$.place << "\n";
                     string tmp = $1;
-                    map_check_dec(tmp);
+                    map_check_declaration(tmp);
                 }
                 ;
 
@@ -650,7 +650,7 @@ var:            IDENT var_2{
                     $$.code = $2.code;
                     $$.type = $2.type;
                     string tmp = $1;
-                    map_check_dec(tmp);
+                    map_check_declaration(tmp);
                     if(map_check(tmp) && var_map[tmp].type != $2.type){
                         if($2.type == INT_ARR){
                             string output ="Error: used variable \"" + tmp + "\" is not an array.";
@@ -778,7 +778,7 @@ bool map_check(string name) {
     }
     return true;
 }
-void map_check_dec(string name) {
+void map_check_declaration(string name) {
     if(!map_check(name)){
         string tmp = "ERROR: \"" + name + "\" does not exist";
         yyerror(tmp.c_str());
@@ -793,23 +793,22 @@ int yyerror(const char *s) {
 
 int main(int argc, char **argv) {
 
-    if ( (argc > 1) && (intfile = fopen(argv[1],"r")) == NULL){
+    if((argc > 1) && (intfile = fopen(argv[1],"r")) == NULL){
         printf("syntax: %s filename\n", argv[0]);
         return 1;
     }
 
     yyparse();
 
-    if(success){
+    if(success) {
         ofstream file;
         file.open("mil_code.mil");
         file << all_code->str();
         file.close();
     }
-    else{
+    else {
         cout << "***Errors exist, fix to compile code***" << endl;
     }
-
-
+	
     return 0;
 }
