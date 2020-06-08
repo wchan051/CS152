@@ -11,7 +11,6 @@ void print_test(stringstream o);
 string gen_code(string *res, string op, string *value_1, string *value_2);
 string to_string(char* s);
 string to_string(int s);
-int temp = 0;
 string * new_temp();
 string * new_label();
 string go_to(string *s);
@@ -23,7 +22,7 @@ bool no_main_function = false;
 void push_map(string name, Variable v);
 bool check_map(string name);
 void check_map_dec(string name);
-
+int temp = 0;
 map<string,Variable> var_map;
 stack<Loop> loop_stack;
 
