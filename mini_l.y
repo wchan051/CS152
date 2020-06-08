@@ -21,11 +21,11 @@ string dec_temp(string *s);
 void expression_code( Terminal &DD,  Terminal D2, Terminal D3,string op);
 bool success = true;
 bool no_main = false;
-void push_map(string name, Var v);
+void push_map(string name, Variable v);
 bool check_map(string name);
 void check_map_dec(string name);
 
-map<string,Var> var_map;
+map<string,Variable> var_map;
 stack<Loop> loop_stack;
 
 %}
@@ -82,12 +82,12 @@ function:   FUNCTION b_func SEMICOLON BEGINPARAMS decl_loop ENDPARAMS BEGINLOCAL
                     no_main = true;
                 }
                 *($$.code)  << "func " << tmp << "\n" << $5.code->str() << $8.code->str();
-                for(int i = 0; i < $5.vars->size(); ++i){
-                    if((*$5.vars)[i].type == INT_ARR){
+                for(int i = 0; i < $5.variables->size(); ++i){
+                    if((*$5.variables)[i].type == INT_ARR){
                         yyerror("Error: cannot pass arrays to function.");
                     }
-                    else if((*$5.vars)[i].type == INT){
-                        *($$.code) << "= " << *((*$5.vars)[i].place) << ", " << "$"<< to_string(i) << "\n";
+                    else if((*$5.variables)[i].type == INT){
+                        *($$.code) << "= " << *((*$5.variables)[i].place) << ", " << "$"<< to_string(i) << "\n";
                     }else{
                         yyerror("Error: invalid type");
                     }
@@ -97,7 +97,7 @@ function:   FUNCTION b_func SEMICOLON BEGINPARAMS decl_loop ENDPARAMS BEGINLOCAL
             ;
 b_func: IDENT {
             string tmp = $1;
-            Var myf = Var();
+            Variable myf = Varriable();
             myf.type = FUNC;
             if(!check_map(tmp)){
                 push_map(tmp,myf); 
@@ -118,15 +118,15 @@ function_2: statement SEMICOLON function_2 {
 
 decl_loop:  declaration SEMICOLON decl_loop {
                 $$.code = $1.code;
-                $$.vars = $1.vars;
-                for( int i = 0; i < $3.vars->size(); ++i){
-                    $$.vars->push_back((*$3.vars)[i]);
+                $$.variables = $1.variables;
+                for( int i = 0; i < $3.variables->size(); ++i){
+                    $$.variables->push_back((*$3.varieables)[i]);
                 }
                 *($$.code) << $3.code->str();
                 } 
             | {
                 $$.code = new stringstream();
-                $$.vars = new vector<Var>();
+                $$.variables = new vector<Variable>();
               }
             ;
 
@@ -144,13 +144,13 @@ declaration:    IDENT declaration_2 {
                     $$.type = $2.type;
                     $$.length = $2.length;
 
-                    $$.vars = $2.vars;
-                    Var v = Var();
+                    $$.variables = $2.variables;
+                    Variable v = Variable();
                     v.type = $2.type;
                     v.length = $2.length;
                     v.place = new string();
                     *v.place = $1;
-                    $$.vars->push_back(v);
+                    $$.variables->push_back(v);
                     if($2.type == INT_ARR){
                         if($2.length <= 0){
                             yyerror("ERROR: invalid array size <= 0");
@@ -186,13 +186,13 @@ declaration_2:  COMMA IDENT declaration_2 {
                     $$.code = $3.code;
                     $$.type = $3.type;
                     $$.length = $3.length;
-                    $$.vars = $3.vars;
-                    Var v = Var();
+                    $$.variables = $3.variables;
+                    Variable v = Variable();
                     v.type = $3.type;
                     v.length = $3.length;
                     v.place = new string();
                     *v.place = $2;
-                    $$.vars->push_back(v);
+                    $$.variables->push_back(v);
                     if($3.type == INT_ARR){
                         *($$.code) << ".[] " << $2 << ", " << $3.length << "\n";
                         string s = $2;
@@ -221,19 +221,19 @@ declaration_2:  COMMA IDENT declaration_2 {
                     $$.code = $2.code;
                     $$.type = $2.type;
                     $$.length = $2.length;
-                    $$.vars = $2.vars;
+                    $$.variables = $2.variables;
                 }
                 ;
 
 declaration_3:  ARRAY LSQUARE NUMBER RSQUARE OF{
                     $$.code = new stringstream();
-                    $$.vars = new vector<Var>();
+                    $$.variables = new vector<Variable>();
                     $$.type = INT_ARR;
                     $$.length = $3;
                 }
                 | {
                     $$.code = new stringstream();
-                    $$.vars = new vector<Var>();
+                    $$.variables = new vector<Variable>();
                     $$.type = INT;
                     $$.length = 0;
                   }
@@ -767,7 +767,7 @@ string * new_label(){
 }
 
 
-void push_map(string name, Var v){
+void push_map(string name, Variable v){
     if(var_map.find(name) == var_map.end()){
         var_map[name] = v;
     }
