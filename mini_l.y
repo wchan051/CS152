@@ -52,12 +52,12 @@ int temp_l = 0;
 %left AND OR
 %right ASSIGN
 %type <NonTerminal> program
-%type <Terminal> decl_loop stmt_loop function function_2 declaration declaration_2 declaration_3 statement  statement_1 statement_2   statement_2_2 statement_3   statement_4   statement_5   statement_5_2  statement_6   statement_6_2  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_3_2       term_3_3       var           var_2         b_loop b_func
+%type <Terminal> dec_loop stmt_loop funct funct_2 dec dec_2 dec_3 statement statement_1 statement_2  statement_2_2 statement_3   statement_4   statement_5   statement_5_2  statement_6   statement_6_2  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_3_2       term_3_3       var           var_2 		b_loop 		b_func
 
 
 %%
 
-program:    function program {
+program:    funct program {
                 $$.code = $1.code;
                 *($$.code) << $2.code->str();
                 if(!no_main_function) {
@@ -71,7 +71,7 @@ program:    function program {
               }
             ;
 
-function:   FUNCTION b_func SEMICOLON BEGINPARAMS decl_loop ENDPARAMS BEGINLOCALS decl_loop ENDLOCALS BEGINBODY statement SEMICOLON function_2 {
+funct:   FUNCTION b_func SEMICOLON BEGINPARAMS dec_loop ENDPARAMS BEGINLOCALS dec_loop ENDLOCALS BEGINBODY statement SEMICOLON funct_2 {
                 $$.code = new stringstream(); 
                 string tmp = *$2.place;
                 if( tmp.compare("main") == 0) {
@@ -102,7 +102,7 @@ b_func: IDENT {
             *$$.place = tmp;
         };
 
-function_2: statement SEMICOLON function_2 {
+funct_2: statement SEMICOLON funct_2 {
                 $$.code = $1.code;
                 *($$.code) << $3.code->str();
               } 
@@ -112,7 +112,7 @@ function_2: statement SEMICOLON function_2 {
               }
             ;
 
-decl_loop:  declaration SEMICOLON decl_loop {
+dec_loop:  dec SEMICOLON dec_loop {
                 $$.code = $1.code;
                 $$.variables = $1.variables;
                 for( int i = 0; i < $3.variables->size(); ++i) {
@@ -135,7 +135,7 @@ stmt_loop:  statement SEMICOLON stmt_loop {
               }
             ;
 
-declaration:    IDENT declaration_2 {
+dec:    IDENT dec_2 {
                     $$.code = $2.code;
                     $$.type = $2.type;
                     $$.length = $2.length;
@@ -178,7 +178,7 @@ declaration:    IDENT declaration_2 {
                 }
                 ;
 
-declaration_2:  COMMA IDENT declaration_2 {
+dec_2:  COMMA IDENT dec_2 {
                     $$.code = $3.code;
                     $$.type = $3.type;
                     $$.length = $3.length;
@@ -213,7 +213,7 @@ declaration_2:  COMMA IDENT declaration_2 {
                     }else{
                     }
                 }
-                | COLON declaration_3 INTEGER {
+                | COLON dec_3 INTEGER {
                     $$.code = $2.code;
                     $$.type = $2.type;
                     $$.length = $2.length;
@@ -221,7 +221,7 @@ declaration_2:  COMMA IDENT declaration_2 {
                 }
                 ;
 
-declaration_3:  ARRAY LSQUARE NUMBER RSQUARE OF{
+dec_3:  ARRAY LSQUARE NUMBER RSQUARE OF{
                     $$.code = new stringstream();
                     $$.variables = new vector<Variable>();
                     $$.type = INT_ARR;
