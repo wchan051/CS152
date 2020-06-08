@@ -1,34 +1,35 @@
 %{
-    #include "heading.h"
-    int yyerror(const char* s);
-    extern int currLine;
-    extern int currPos;
-    int yylex(void);
-    stringstream *all_code;
-    FILE * intfile;
-    string code_gen(string *res, string op, string *value_1, string *value_2);
-    string toString(char* s);
-    string toString(int s);
-    string go_to(string *s);
-    void expression_code( Terminal &D1,  Terminal D2, Terminal D3, string op);
-    bool success = true;
-    bool no_main_function = false;
-    void push_map(string name, Variable vari);
-    bool map_check(string name);
-    void map_check_declaration(string name);
-    string label_declaration(string *s);
-    string temp_declaration(string *s);
-    map<string,Variable> var_map;
-    string *newTemp();
-    string *newLabel();
-    stack<Loop> loop_stack;
-    int temp = 0;
-    int temp_l = 0;
+#include "heading.h"
+int yyerror(const char* s);
+extern int currLine;
+extern int currPos;
+int yylex(void);
+stringstream *all_code;
+FILE * intfile;
+string code_gen(string *res, string op, string *value_1, string *value_2);
+string toString(char* s);
+string toString(int s);
+string go_to(string *s);
+void expression_code( Terminal &D1,  Terminal D2, Terminal D3, string op);
+bool success = true;
+bool no_main_function = false;
+void push_map(string name, Variable vari);
+bool map_check(string name);
+void map_check_declaration(string name);
+string label_declaration(string *s);
+string temp_declaration(string *s);
+map<string,Variable> var_map;
+string *newTemp();
+string *newLabel();
+stack<Loop> loop_stack;
+int temp = 0;
+int temp_l = 0;
+
 %}
 
 %union{
-    int val;
-    char idval[256];
+    int       val;
+    char     idval[256];
 
     struct {
         stringstream *code;
@@ -52,7 +53,7 @@
 %left AND OR
 %right ASSIGN
 %type <NonTerminal> program
-%type <Terminal> dec_loop stmt_loop funct funct_2 dec dec_2 dec_3 statement statement_1 statement_2  statement_2_2 statement_3   statement_4   statement_5   statement_5_2  statement_6   statement_6_2  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_3_2       term_3_3       var           var_2 		b_loop 		b_func
+%type <Terminal> dec_loop statement_loop funct funct_2 dec dec_2 dec_3 statement statement_1 statement_2  statement_2_2 statement_3   statement_4   statement_5   statement_5_2  statement_6   statement_6_2  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_3_2       term_3_3       var           var_2 		b_loop 		b_func
 
 
 %%
@@ -126,7 +127,7 @@ dec_loop:  dec SEMICOLON dec_loop {
               }
             ;
 
-stmt_loop:  statement SEMICOLON stmt_loop {
+statement_loop:  statement SEMICOLON statement_loop {
                 $$.code = $1.code;
                 *($$.code) << $3.code->str();
               } 
@@ -292,7 +293,7 @@ statement_1:    var ASSIGN expression{
                 }
                 ;
 
-statement_2:    IF bool_exp THEN stmt_loop statement_2_2 ENDIF {
+statement_2:    IF bool_exp THEN statement_loop statement_2_2 ENDIF {
                     $$.code = new stringstream();
                     $$.begin = newLabel();
                     $$.end = newLabel();
@@ -313,13 +314,13 @@ statement_2_2:   {
                     $$.code = new stringstream();
                     $$.begin = NULL;
                 }
-                | ELSE stmt_loop {
+                | ELSE statement_loop {
                     $$.code = $2.code;
                     $$.begin = newLabel();
                 }
                 ;
 
-statement_3:    WHILE bool_exp b_loop BEGINLOOP stmt_loop ENDLOOP{
+statement_3:    WHILE bool_exp b_loop BEGINLOOP statement_loop ENDLOOP{
                     $$.code = new stringstream();
                     $$.begin = $3.begin;
                     $$.parent = $3.parent;
@@ -343,7 +344,7 @@ b_loop:         {
                     loop_stack.push(l);
                 };
 
-statement_4:    DO b_loop BEGINLOOP stmt_loop ENDLOOP WHILE bool_exp{
+statement_4:    DO b_loop BEGINLOOP statement_loop ENDLOOP WHILE bool_exp{
                     $$.code = new stringstream();
                     $$.begin = $2.begin;
                     $$.parent = $2.parent;
