@@ -5,22 +5,21 @@ extern int curr_line;
 extern int curr_pos;
 int yylex(void);
 stringstream *all_code;
-FILE * myin;
+FILE * intfile;
 void print_test(string output);
 void print_test(stringstream o);
-string gen_code(string *res, string op, string *val1, string *val2);
+string gen_code(string *res, string op, string *value_1, string *value_2);
 string to_string(char* s);
 string to_string(int s);
-int tempi = 0;
-int templ = 0;
+int temp = 0;
 string * new_temp();
 string * new_label();
 string go_to(string *s);
 string dec_label(string *s);
 string dec_temp(string *s);
-void expression_code( Terminal &DD,  Terminal D2, Terminal D3,string op);
+void expression_code( Terminal &DD,  Terminal D2, Terminal D3, string op);
 bool success = true;
-bool no_main = false;
+bool no_main_function = false;
 void push_map(string name, Variable v);
 bool check_map(string name);
 void check_map_dec(string name);
@@ -64,7 +63,7 @@ stack<Loop> loop_stack;
 program:    function program {
                 $$.code = $1.code;
                 *($$.code) << $2.code->str();
-                if(!no_main){
+                if(!no_main_function){
                     yyerror("ERROR: main function not defined.");
                 }
 
@@ -79,7 +78,7 @@ function:   FUNCTION b_func SEMICOLON BEGINPARAMS decl_loop ENDPARAMS BEGINLOCAL
                 $$.code = new stringstream(); 
                 string tmp = *$2.place;
                 if( tmp.compare("main") == 0){
-                    no_main = true;
+                    no_main_function = true;
                 }
                 *($$.code)  << "func " << tmp << "\n" << $5.code->str() << $8.code->str();
                 for(int i = 0; i < $5.variables->size(); ++i){
@@ -703,12 +702,12 @@ void print_test(string o){
         << "\n----------END -----------\n";
 }
 
-string gen_code(string *res, string op, string *val1, string *val2){
+string gen_code(string *res, string op, string *value_1, string *value_2){
     if(op == "!"){
-        return op + " " + *res + ", " + *val1 + "\n";
+        return op + " " + *res + ", " + *value_1 + "\n";
     }
     else{
-        return op + " " + *res + ", " + *val1 + ", "+ *val2 +"\n";
+        return op + " " + *res + ", " + *value_1 + ", "+ *value_2 +"\n";
     }
 }
 
@@ -735,9 +734,9 @@ string dec_temp(string *s){
 string * new_temp(){
     string * t = new string();
     ostringstream conv;
-    conv << tempi;
+    conv << temp;
     *t = "__temp__"+ conv.str();
-    tempi++;
+    temp++;
     return t;
 }
 string * new_label(){
@@ -796,7 +795,7 @@ int yyerror(const char *s) {
 }
 int main(int argc, char **argv) {
 
-    if ( (argc > 1) && (myin = fopen(argv[1],"r")) == NULL){
+    if ( (argc > 1) && (intfile = fopen(argv[1],"r")) == NULL){
         printf("syntax: %s filename\n", argv[0]);
         return 1;
     }
