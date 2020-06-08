@@ -1,35 +1,34 @@
 %{
-#include "heading.h"
-int yyerror(const char* s);
-extern int currLine;
-extern int currPos;
-int yylex(void);
-stringstream *all_code;
-FILE * intfile;
-string code_gen(string *res, string op, string *value_1, string *value_2);
-string toString(char* s);
-string toString(int s);
-string go_to(string *s);
-void expression_code( Terminal &D1,  Terminal D2, Terminal D3, string op);
-bool success = true;
-bool no_main_function = false;
-void push_map(string name, Variable vari);
-bool map_check(string name);
-void map_check_declaration(string name);
-string label_declaration(string *s);
-string temp_declaration(string *s);
-map<string,Variable> var_map;
-string *newTemp();
-string *newLabel();
-stack<Loop> loop_stack;
-int temp = 0;
-int temp_l = 0;
-
+    #include "heading.h"
+    int yyerror(const char* s);
+    extern int currLine;
+    extern int currPos;
+    int yylex(void);
+    stringstream *all_code;
+    FILE * intfile;
+    string code_gen(string *res, string op, string *value_1, string *value_2);
+    string toString(char* s);
+    string toString(int s);
+    string go_to(string *s);
+    void expression_code( Terminal &D1,  Terminal D2, Terminal D3, string op);
+    bool success = true;
+    bool no_main_function = false;
+    void push_map(string name, Variable vari);
+    bool map_check(string name);
+    void map_check_declaration(string name);
+    string label_declaration(string *s);
+    string temp_declaration(string *s);
+    map<string,Variable> var_map;
+    string *newTemp();
+    string *newLabel();
+    stack<Loop> loop_stack;
+    int temp = 0;
+    int temp_l = 0;
 %}
 
 %union{
-    int       val;
-    char     idval[256];
+    int val;
+    char idval[256];
 
     struct {
         stringstream *code;
@@ -46,7 +45,8 @@ int temp_l = 0;
 %token  SEMICOLON COLON COMMA LPAREN RPAREN LSQUARE RSQUARE EQUAL
 %token <val> NUMBER
 %token <idval> IDENT
-%left MULT DIV MOD ADD SUB 
+%left MULT DIV MOD 
+%left ADD SUB 
 %left LT LTE GT GTE EQ NEQ
 %right NOT
 %left AND OR
