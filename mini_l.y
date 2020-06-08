@@ -6,24 +6,22 @@ extern int currPos;
 int yylex(void);
 stringstream *all_code;
 FILE * intfile;
-void print_test(string output);
-void print_test(stringstream o);
 string gen_code(string *res, string op, string *value_1, string *value_2);
 string to_string(char* s);
 string to_string(int s);
-string * new_temp();
-string * new_label();
+string * newTemp();
+string * newLabel();
 string go_to(string *s);
-string dec_label(string *s);
-string dec_temp(string *s);
+string label_declaration(string *s);
+string temp_declaration(string *s);
 void expression_code( Terminal &DD,  Terminal D2, Terminal D3, string op);
 bool success = true;
 bool no_main_function = false;
 void push_map(string name, Variable v);
-bool check_map(string name);
-void check_map_dec(string name);
+bool map_check(string name);
+void map_check_dec(string name);
 int temp = 0;
-int templ = 0;
+int temp_l = 0;
 map<string,Variable> var_map;
 stack<Loop> loop_stack;
 
@@ -98,7 +96,7 @@ b_func: IDENT {
             string tmp = $1;
             Variable myf = Variable();
             myf.type = FUNC;
-            if(!check_map(tmp)){
+            if(!map_check(tmp)){
                 push_map(tmp,myf); 
             }
             $$.place = new string();
@@ -156,7 +154,7 @@ declaration:    IDENT declaration_2 {
                         }
                         *($$.code) << ".[] " << $1 << ", " << $2.length << "\n";
                         string s = $1;
-                        if(!check_map(s)){
+                        if(!map_check(s)){
                             push_map(s,v);
                         }
                         else{
@@ -168,7 +166,7 @@ declaration:    IDENT declaration_2 {
                     else if($2.type == INT){
                         *($$.code) << ". " << $1 << "\n";
                         string s = $1;
-                        if(!check_map(s)){
+                        if(!map_check(s)){
                             push_map(s,v);
                         }
                         else{
@@ -195,7 +193,7 @@ declaration_2:  COMMA IDENT declaration_2 {
                     if($3.type == INT_ARR){
                         *($$.code) << ".[] " << $2 << ", " << $3.length << "\n";
                         string s = $2;
-                        if(!check_map(s)){
+                        if(!map_check(s)){
                             push_map(s,v);
                         }
                         else{
@@ -206,7 +204,7 @@ declaration_2:  COMMA IDENT declaration_2 {
                     else if($3.type == INT){
                         *($$.code) << ". " << $2 << "\n";
                         string s = $2;
-                        if(!check_map(s)){
+                        if(!map_check(s)){
                             push_map(s,v);
                         }
                         else{
@@ -285,8 +283,8 @@ statement_1:    var ASSIGN expression{
                         *($$.code) << gen_code($1.value, "[]=", $1.index, $3.place);
                     }
                     else if($1.type == INT_ARR && $3.type == INT_ARR){
-                        string *tmp = new_temp();
-                        *($$.code) << dec_temp(tmp) << gen_code(tmp, "=[]", $3.place, $3.index);
+                        string *tmp = newTemp();
+                        *($$.code) << temp_declaration(tmp) << gen_code(tmp, "=[]", $3.place, $3.index);
                         *($$.code) << gen_code($1.value, "[]=", $1.index, tmp);
                     }
                     else{
@@ -297,18 +295,18 @@ statement_1:    var ASSIGN expression{
 
 statement_2:    IF bool_exp THEN stmt_loop statement_21 ENDIF{
                     $$.code = new stringstream();
-                    $$.begin = new_label();
-                    $$.end = new_label();
+                    $$.begin = newLabel();
+                    $$.end = newLabel();
                     *($$.code) << $2.code->str() << "?:= " << *$$.begin << ", " <<  *$2.place << "\n";
                     if($5.begin != NULL){                       
                         *($$.code) << go_to($5.begin); 
-                        *($$.code) << dec_label($$.begin)  << $4.code->str() << go_to($$.end);
-                        *($$.code) << dec_label($5.begin) << $5.code->str();
+                        *($$.code) << label_declaration($$.begin)  << $4.code->str() << go_to($$.end);
+                        *($$.code) << label_declaration($5.begin) << $5.code->str();
                     }
                     else{
-                        *($$.code) << go_to($$.end)<< dec_label($$.begin)  << $4.code->str();
+                        *($$.code) << go_to($$.end)<< label_declaration($$.begin)  << $4.code->str();
                     }
-                    *($$.code) << dec_label($$.end);
+                    *($$.code) << label_declaration($$.end);
                 }
                 ;
 
@@ -318,7 +316,7 @@ statement_21:   {
                 }
                 | ELSE stmt_loop{
                     $$.code = $2.code;
-                    $$.begin = new_label();
+                    $$.begin = newLabel();
                 }
                 ;
 
@@ -327,8 +325,8 @@ statement_3:    WHILE bool_exp b_loop BEGINLOOP stmt_loop ENDLOOP{
                     $$.begin = $3.begin;
                     $$.parent = $3.parent;
                     $$.end = $3.end;
-                    *($$.code) << dec_label($$.parent) << $2.code->str() << "?:= " << *$$.begin << ", " << *$2.place << "\n" 
-                    << go_to($$.end) << dec_label($$.begin) << $5.code->str() << go_to($$.parent) << dec_label($$.end);
+                    *($$.code) << label_declaration($$.parent) << $2.code->str() << "?:= " << *$$.begin << ", " << *$2.place << "\n" 
+                    << go_to($$.end) << label_declaration($$.begin) << $5.code->str() << go_to($$.parent) << label_declaration($$.end);
                     loop_stack.pop();
 
                 }
@@ -336,9 +334,9 @@ statement_3:    WHILE bool_exp b_loop BEGINLOOP stmt_loop ENDLOOP{
 
 b_loop:         {
                     $$.code = new stringstream();
-                    $$.begin = new_label();
-                    $$.parent = new_label();
-                    $$.end = new_label();
+                    $$.begin = newLabel();
+                    $$.parent = newLabel();
+                    $$.end = new_Label();
                     Loop l = Loop();
                     l.parent = $$.parent;
                     l.begin = $$.begin;
@@ -351,7 +349,7 @@ statement_4:    DO b_loop BEGINLOOP stmt_loop ENDLOOP WHILE bool_exp{
                     $$.begin = $2.begin;
                     $$.parent = $2.parent;
                     $$.end = $2.end;
-                    *($$.code) << dec_label($$.begin) << $4.code->str() << dec_label($$.parent) << $7.code->str() << "?:= " << *$$.begin << ", " << *$7.place << "\n" << dec_label($$.end);
+                    *($$.code) << label_declaration($$.begin) << $4.code->str() << label_declaration($$.parent) << $7.code->str() << "?:= " << *$$.begin << ", " << *$7.place << "\n" << label_declaration($$.end);
                     loop_stack.pop();
                 }
                 ;
@@ -415,8 +413,8 @@ bool_exp:       rel_and_exp bool_exp2{
                     *($$.code) << $2.code->str();
                     if($2.op != NULL && $2.place != NULL)
                     {                        
-                        $$.place = new_temp();
-                       *($$.code) << dec_temp($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
+                        $$.place = newTemp();
+                       *($$.code) << temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -441,8 +439,8 @@ rel_and_exp:    relation_exp rel_and_exp2{
                     *($$.code) << $2.code->str();
                     if($2.op != NULL && $2.place != NULL)
                     {                        
-                        $$.place = new_temp();
-                       *($$.code) << dec_temp($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
+                        $$.place = newTemp();
+                       *($$.code) << temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -467,8 +465,8 @@ relation_exp:   relation_exp_s{
                 }
                 | NOT relation_exp_s{
                     $$.code = $2.code;
-                    $$.place = new_temp();
-                    *($$.code) << dec_temp($$.place) << gen_code($$.place, "!", $2.place, NULL);
+                    $$.place = newTemp();
+                    *($$.code) << temp_declaration($$.place) << gen_code($$.place, "!", $2.place, NULL);
                 }
                 ;
 
@@ -477,8 +475,8 @@ relation_exp_s: expression comp expression{
                     $$.code = $1.code;
                     *($$.code) << $2.code->str();
                     *($$.code) << $3.code->str();
-                    $$.place = new_temp();
-                    *($$.code)<< dec_temp($$.place) << gen_code($$.place, *$2.op, $1.place, $3.place);
+                    $$.place = newTemp();
+                    *($$.code)<< temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $3.place);
                 }
                 | TRUE{                    
 
@@ -535,8 +533,8 @@ expression:     mult_expr expression_2{
                     *($$.code) << $2.code->str();
                     if($2.op != NULL && $2.place != NULL)
                     {                        
-                        $$.place = new_temp();
-                       *($$.code)<< dec_temp($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
+                        $$.place = newTemp();
+                       *($$.code)<< temp_declaration($$.place) << gen_code($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -564,8 +562,8 @@ mult_expr:      term mult_expr_2{
                     *($$.code) << $2.code->str();
                     if($2.op != NULL && $2.place != NULL)
                     {                        
-                        $$.place = new_temp();
-                       *($$.code)<< dec_temp($$.place)<< gen_code($$.place, *$2.op, $1.place, $2.place);
+                        $$.place = newTemp();
+                       *($$.code)<< temp_declaration($$.place)<< gen_code($$.place, *$2.op, $1.place, $2.place);
                     }
                     else{
                         $$.place = $1.place;
@@ -593,9 +591,9 @@ mult_expr_2:    MULT term mult_expr_2{
 
 term:           SUB term_2{
                     $$.code = $2.code;
-                    $$.place = new_temp();
+                    $$.place = newTemp();
                     string tmp = "-1";
-                    *($$.code)<< dec_temp($$.place) << gen_code($$.place, "*",$2.place, &tmp );
+                    *($$.code)<< temp_declaration($$.place) << gen_code($$.place, "*",$2.place, &tmp );
                   }
                 | term_2{
                     $$.code = $1.code;
@@ -625,10 +623,10 @@ term_2:         var{
 
 term_3:         IDENT LPAREN term_31 RPAREN{
                     $$.code = $3.code;
-                    $$.place = new_temp();
-                    *($$.code) << dec_temp($$.place)<< "call " << $1 << ", " << *$$.place << "\n";
+                    $$.place = newTemp();
+                    *($$.code) << temp_declaration($$.place)<< "call " << $1 << ", " << *$$.place << "\n";
                     string tmp = $1;
-                    check_map_dec(tmp);
+                    map_check_dec(tmp);
                 }
                 ;
 
@@ -652,8 +650,8 @@ var:            IDENT var_2{
                     $$.code = $2.code;
                     $$.type = $2.type;
                     string tmp = $1;
-                    check_map_dec(tmp);
-                    if(check_map(tmp) && var_map[tmp].type != $2.type){
+                    map_check_dec(tmp);
+                    if(map_check(tmp) && var_map[tmp].type != $2.type){
                         if($2.type == INT_ARR){
                             string output ="Error: used variable \"" + tmp + "\" is not an array.";
                             yyerror(output.c_str());
@@ -670,10 +668,10 @@ var:            IDENT var_2{
                     }
                     else{
                         $$.index = $2.index;
-                        $$.place = new_temp();
+                        $$.place = newTemp();
                         string* tmp = new string();
                         *tmp = $1;
-                        *($$.code) << dec_temp($$.place) << gen_code($$.place, "=[]", tmp,$2.index);
+                        *($$.code) << temp_declaration($$.place) << gen_code($$.place, "=[]", tmp,$2.index);
                         $$.value = new string();
                         *$$.value = $1;
                     }
@@ -721,15 +719,15 @@ string go_to(string *s) {
     return ":= "+ *s + "\n"; 
 }
 
-string dec_label(string *s) {
+string label_declaration(string *s) {
     return ": " +*s + "\n"; 
 }
 
-string dec_temp(string *s) {
+string temp_declaration(string *s) {
     return ". " +*s + "\n"; 
 }
 
-string *new_temp() {
+string *newTemp() {
     string *t = new string();
     ostringstream conv;
     conv << temp;
@@ -738,12 +736,12 @@ string *new_temp() {
     return t;
 }
 
-string * new_label() {
+string * newLabel() {
     string * t = new string();
     ostringstream conv;
-    conv << templ;
+    conv << temp_l;
     *t = "__label__"+ conv.str();
-    templ++;
+    temp_l++;
     return t;
 }
  
@@ -756,11 +754,11 @@ string * new_label() {
         *DD.op = op;
     }
     else {
-        DD.place = new_temp();
+        DD.place = newTemp();
         DD.op = new string();
         *DD.op = op;
 
-        *(DD.code) << dec_temp(DD.place)<< gen_code(DD.place , *D3.op, D2.place, D3.place);
+        *(DD.code) << temp_declaration(DD.place)<< gen_code(DD.place , *D3.op, D2.place, D3.place);
     } 
 }
 
@@ -774,14 +772,14 @@ void push_map(string name, Variable v) {
         yyerror(tmp.c_str());
     }
 }
-bool check_map(string name) {
+bool map_check(string name) {
     if(var_map.find(name) == var_map.end()){
         return false;
     }
     return true;
 }
-void check_map_dec(string name) {
-    if(!check_map(name)){
+void map_check_dec(string name) {
+    if(!map_check(name)){
         string tmp = "ERROR: \"" + name + "\" does not exist";
         yyerror(tmp.c_str());
     }
