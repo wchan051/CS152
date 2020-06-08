@@ -336,7 +336,7 @@ b_loop:         {
                     $$.code = new stringstream();
                     $$.begin = newLabel();
                     $$.parent = newLabel();
-                    $$.end = new_Label();
+                    $$.end = newLabel();
                     Loop l = Loop();
                     l.parent = $$.parent;
                     l.begin = $$.begin;
