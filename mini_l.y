@@ -696,50 +696,49 @@ var_2:          LSQUARE  expression RSQUARE {
             
 %%
 
-void print_test(string o){
-    cout << "\n---------TEST-----------\n"
-        << o
-        << "\n----------END -----------\n";
-}
-
-string gen_code(string *res, string op, string *value_1, string *value_2){
-    if(op == "!"){
+string gen_code(string *res, string op, string *value_1, string *value_2) {
+    if(op == "!") {
         return op + " " + *res + ", " + *value_1 + "\n";
     }
-    else{
+    else {
         return op + " " + *res + ", " + *value_1 + ", "+ *value_2 +"\n";
     }
 }
 
-string to_string(char* s){
+string to_string(char* s) {
     ostringstream c;
     c << s;
     return c.str();
 }
 
-string to_string(int s){
+string to_string(int s) {
     ostringstream c;
     c << s;
     return c.str();
 }
-string go_to(string *s){
+
+string go_to(string *s) {
     return ":= "+ *s + "\n"; 
 }
-string dec_label(string *s){
+
+string dec_label(string *s) {
     return ": " +*s + "\n"; 
 }
-string dec_temp(string *s){
+
+string dec_temp(string *s) {
     return ". " +*s + "\n"; 
 }
-string * new_temp(){
-    string * t = new string();
+
+string *new_temp() {
+    string *t = new string();
     ostringstream conv;
     conv << temp;
     *t = "__temp__"+ conv.str();
     temp++;
     return t;
 }
-string * new_label(){
+
+string * new_label() {
     string * t = new string();
     ostringstream conv;
     conv << templ;
@@ -748,15 +747,15 @@ string * new_label(){
     return t;
 }
  
- void expression_code( Terminal &DD, Terminal D2, Terminal D3, string op){
+ void expression_code( Terminal &DD, Terminal D2, Terminal D3, string op) {
     DD.code = D2.code;
     *(DD.code) << D3.code->str();
-    if(D3.op == NULL){
+    if(D3.op == NULL) {
         DD.place = D2.place;
         DD.op = new string();
         *DD.op = op;
     }
-    else{
+    else {
         DD.place = new_temp();
         DD.op = new string();
         *DD.op = op;
@@ -766,22 +765,22 @@ string * new_label(){
 }
 
 
-void push_map(string name, Variable v){
-    if(var_map.find(name) == var_map.end()){
+void push_map(string name, Variable v) {
+    if(var_map.find(name) == var_map.end()) {
         var_map[name] = v;
     }
-    else{
+    else {
         string tmp = "ERROR: " + name + " already exists";
         yyerror(tmp.c_str());
     }
 }
-bool check_map(string name){
+bool check_map(string name) {
     if(var_map.find(name) == var_map.end()){
         return false;
     }
     return true;
 }
-void check_map_dec(string name){
+void check_map_dec(string name) {
     if(!check_map(name)){
         string tmp = "ERROR: \"" + name + "\" does not exist";
         yyerror(tmp.c_str());
@@ -793,6 +792,7 @@ int yyerror(const char *s) {
    printf("** Line %d, position %d: %s\n", currLine, currPos, s);
    return -1;
 }
+
 int main(int argc, char **argv) {
 
     if ( (argc > 1) && (intfile = fopen(argv[1],"r")) == NULL){
