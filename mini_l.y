@@ -9,21 +9,21 @@ FILE * intfile;
 string gen_code(string *res, string op, string *value_1, string *value_2);
 string to_string(char* s);
 string to_string(int s);
-string * newTemp();
-string * newLabel();
 string go_to(string *s);
-string label_declaration(string *s);
-string temp_declaration(string *s);
-void expression_code( Terminal &DD,  Terminal D2, Terminal D3, string op);
+void expression_code( Terminal &D1,  Terminal D2, Terminal D3, string op);
 bool success = true;
 bool no_main_function = false;
-void push_map(string name, Variable v);
+void push_map(string name, Variable vari);
 bool map_check(string name);
 void map_check_declaration(string name);
+string label_declaration(string *s);
+string temp_declaration(string *s);
+map<string,Variable> var_map;
+string *newTemp();
+string *newLabel();
+stack<Loop> loop_stack;
 int temp = 0;
 int temp_l = 0;
-map<string,Variable> var_map;
-stack<Loop> loop_stack;
 
 %}
 
@@ -53,7 +53,7 @@ stack<Loop> loop_stack;
 %right ASSIGN
 
 %type <NonTerminal> program
-%type <Terminal> decl_loop stmt_loop function function_2 declaration declaration_2 declaration_3 statement  statement_1 statement_2   statement_21 statement_3   statement_4   statement_5   statement_51  statement_6   statement_61  bool_exp      bool_exp2     rel_and_exp   rel_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_31       term_32       var           var_2         b_loop b_func
+%type <Terminal> decl_loop stmt_loop function function_2 declaration declaration_2 declaration_3 statement  statement_1 statement_2   statement_21 statement_3   statement_4   statement_5   statement_51  statement_6   statement_61  bool_exp      bool_exp2     relation_and_exp   relation_and_exp2  relation_exp   relation_exp_s comp          expression    expression_2  mult_expr     mult_expr_2   term          term_2        term_3        term_31       term_32       var           var_2         b_loop b_func
 
 
 %%
@@ -142,12 +142,12 @@ declaration:    IDENT declaration_2 {
                     $$.length = $2.length;
 
                     $$.variables = $2.variables;
-                    Variable v = Variable();
-                    v.type = $2.type;
-                    v.length = $2.length;
-                    v.place = new string();
-                    *v.place = $1;
-                    $$.variables->push_back(v);
+                    Variable vari = Variable();
+                    vari.length = $2.length;
+                    vari.type = $2.type;
+                    vari.place = new string();
+                    *vari.place = $1;
+                    $$.variables->push_back(vari);
                     if($2.type == INT_ARR){
                         if($2.length <= 0){
                             yyerror("ERROR: invalid array size <= 0");
@@ -155,7 +155,7 @@ declaration:    IDENT declaration_2 {
                         *($$.code) << ".[] " << $1 << ", " << $2.length << "\n";
                         string s = $1;
                         if(!map_check(s)){
-                            push_map(s,v);
+                            push_map(s,vari);
                         }
                         else{
                             string tmp = "Error: Symbol \"" + s + "\" is multiply-defined";
@@ -167,7 +167,7 @@ declaration:    IDENT declaration_2 {
                         *($$.code) << ". " << $1 << "\n";
                         string s = $1;
                         if(!map_check(s)){
-                            push_map(s,v);
+                            push_map(s,vari);
                         }
                         else{
                             string tmp = "Error: Symbol \"" + s + "\" is multiply-defined";
@@ -184,17 +184,17 @@ declaration_2:  COMMA IDENT declaration_2 {
                     $$.type = $3.type;
                     $$.length = $3.length;
                     $$.variables = $3.variables;
-                    Variable v = Variable();
-                    v.type = $3.type;
-                    v.length = $3.length;
-                    v.place = new string();
-                    *v.place = $2;
-                    $$.variables->push_back(v);
+                    Variable vari = Variable();
+                    vari.length = $3.length;
+                    vari.type = $3.type;
+                    vari.place = new string();
+                    *vari.place = $2;
+                    $$.variables->push_back(vari);
                     if($3.type == INT_ARR){
                         *($$.code) << ".[] " << $2 << ", " << $3.length << "\n";
                         string s = $2;
                         if(!map_check(s)){
-                            push_map(s,v);
+                            push_map(s,vari);
                         }
                         else{
                             string tmp = "Error: Symbol \"" + s + "\" is multiply-defined";
@@ -205,7 +205,7 @@ declaration_2:  COMMA IDENT declaration_2 {
                         *($$.code) << ". " << $2 << "\n";
                         string s = $2;
                         if(!map_check(s)){
-                            push_map(s,v);
+                            push_map(s,vari);
                         }
                         else{
                             string tmp = "Error: Symbol \"" + s + "\" is multiply-defined";
@@ -408,7 +408,7 @@ statement_61:   COMMA var statement_61{
                  }
                 ;
 
-bool_exp:       rel_and_exp bool_exp2{
+bool_exp:       relation_and_exp bool_exp2{
                     $$.code = $1.code;
                     *($$.code) << $2.code->str();
                     if($2.op != NULL && $2.place != NULL)
@@ -423,7 +423,7 @@ bool_exp:       rel_and_exp bool_exp2{
                 }
                 ;
 
-bool_exp2:      OR rel_and_exp bool_exp2{
+bool_exp2:      OR relation_and_exp bool_exp2{
                     expression_code($$,$2,$3,"||");
 
 
@@ -434,7 +434,7 @@ bool_exp2:      OR rel_and_exp bool_exp2{
                  }
                 ; 
 
-rel_and_exp:    relation_exp rel_and_exp2{
+relation_and_exp:    relation_exp relation_and_exp2{
                     $$.code = $1.code;
                     *($$.code) << $2.code->str();
                     if($2.op != NULL && $2.place != NULL)
@@ -449,7 +449,7 @@ rel_and_exp:    relation_exp rel_and_exp2{
                 }
                 ;
 
-rel_and_exp2:   AND relation_exp rel_and_exp2{
+relation_and_exp2:   AND relation_exp relation_and_exp2{
                     expression_code($$,$2,$3,"&&");
 
                 }
@@ -718,6 +718,48 @@ string to_string(int s) {
 string go_to(string *s) {
     return ":= "+ *s + "\n"; 
 }
+ 
+ void expression_code( Terminal &D1, Terminal D2, Terminal D3, string op) {
+    D1.code = D2.code;
+    *(D1.code) << D3.code->str();
+    if(D3.op == NULL) {
+        D1.place = D2.place;
+        D1.op = new string();
+        *D1.op = op;
+    }
+    else {
+        D1.place = newTemp();
+        D1.op = new string();
+        *D1.op = op;
+
+        *(D1.code) << temp_declaration(D1.place)<< gen_code(D1.place , *D3.op, D2.place, D3.place);
+    } 
+}
+
+
+void push_map(string name, Variable vari) {
+    if(var_map.find(name) == var_map.end()) {
+        var_map[name] = vari;
+    }
+    else {
+        string tmp = "ERROR: " + name + " already exists";
+        yyerror(tmp.c_str());
+    }
+}
+
+bool map_check(string name) {
+    if(var_map.find(name) == var_map.end()){
+        return false;
+    }
+    return true;
+}
+
+void map_check_declaration(string name) {
+    if(!map_check(name)){
+        string tmp = "ERROR: \"" + name + "\" does not exist";
+        yyerror(tmp.c_str());
+    }
+}
 
 string label_declaration(string *s) {
     return ": " +*s + "\n"; 
@@ -743,46 +785,6 @@ string *newLabel() {
     *t = "__label__"+ tempostring.str();
     temp_l++;
     return t;
-}
- 
- void expression_code( Terminal &DD, Terminal D2, Terminal D3, string op) {
-    DD.code = D2.code;
-    *(DD.code) << D3.code->str();
-    if(D3.op == NULL) {
-        DD.place = D2.place;
-        DD.op = new string();
-        *DD.op = op;
-    }
-    else {
-        DD.place = newTemp();
-        DD.op = new string();
-        *DD.op = op;
-
-        *(DD.code) << temp_declaration(DD.place)<< gen_code(DD.place , *D3.op, D2.place, D3.place);
-    } 
-}
-
-
-void push_map(string name, Variable v) {
-    if(var_map.find(name) == var_map.end()) {
-        var_map[name] = v;
-    }
-    else {
-        string tmp = "ERROR: " + name + " already exists";
-        yyerror(tmp.c_str());
-    }
-}
-bool map_check(string name) {
-    if(var_map.find(name) == var_map.end()){
-        return false;
-    }
-    return true;
-}
-void map_check_declaration(string name) {
-    if(!map_check(name)){
-        string tmp = "ERROR: \"" + name + "\" does not exist";
-        yyerror(tmp.c_str());
-    }
 }
 
 int yyerror(const char *s) {
