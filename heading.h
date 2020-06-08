@@ -20,8 +20,7 @@ using namespace std;
 
 enum Type {INT,INT_ARR,FUNC};
 
-struct Var{
-        
+struct Variable{ 
     string *place;
     string *value;
     string *offset;
@@ -36,7 +35,6 @@ struct Loop{
     string *end;
 };
 
-
 struct Terminal{
    stringstream *code;
    string *place;
@@ -50,8 +48,7 @@ struct Terminal{
    int length;
    string *index;
    vector<string> *ids;
-   vector<Var> *vars; 
+   vector<Var> *variables; 
 };
-
 
 #endif
