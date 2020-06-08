@@ -23,6 +23,7 @@ void push_map(string name, Variable v);
 bool check_map(string name);
 void check_map_dec(string name);
 int temp = 0;
+int templ = 0;
 map<string,Variable> var_map;
 stack<Loop> loop_stack;
 
